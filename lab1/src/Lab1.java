@@ -24,9 +24,6 @@ public class Lab1 {
     t2 = new Train(2, speed2, Direction.UP, semtoptop, semtopbottom, semmiddletop, semmiddlebottom, sembottomtop, sembottombottom, semleft, semright, semint);
     t1.start();
     t2.start();
-
-    Thread t3 = new Test(semint);
-    t3.start();
   }
 
   public enum Direction {
