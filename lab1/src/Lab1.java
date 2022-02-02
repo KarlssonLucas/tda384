@@ -267,7 +267,7 @@ public class Lab1 {
 
           if (isActive(15, 13, e) || isActive(15, 11, e) || isActive(15, 3, e) || isActive(15, 5, e)) {
             tsi.setSpeed(trainId, 0);
-            sleep(1000 + (20 * Math.abs(speed)));
+            sleep(2000); //Works in our case
             speed = -speed;
             tsi.setSpeed(trainId, speed);
             dir = Direction.flip(dir);
