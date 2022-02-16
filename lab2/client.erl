@@ -26,23 +26,47 @@ initial_state(Nick, GUIAtom, ServerAtom) ->
 %   - Data is what is sent to GUI, either the atom `ok` or a tuple {error, Atom, "Error message"}
 %   - NewState is the updated state of the client
 
+request(Atom, Request) ->
+    case lists:member(Atom, registered()) of
+        true -> 
+            try genserver:request(Atom, Request) of
+                Response -> Response
+            catch 
+                error:_ -> {error, server_not_reached, ""}  %catch all errors
+            end;
+        false -> 
+            {error, server_not_reached, ""}
+    end.
+
 % Join channel
 handle(St, {join, Channel}) ->
     % TODO: Implement this function
     % {reply, ok, St} ;
-    {reply, {error, not_implemented, "join not implemented"}, St} ;
+    case request(St#client_st.server, {join, Channel, St#client_st.nick, self()}) of
+        ok -> {reply, ok, St};
+        Error -> {reply, Error, St}
+    end;
+    
 
 % Leave channel
 handle(St, {leave, Channel}) ->
     % TODO: Implement this function
     % {reply, ok, St} ;
-    {reply, {error, not_implemented, "leave not implemented"}, St} ;
+    case request(list_to_atom(Channel), {leave, Channel, St#client_st.nick, self()}) of
+        ok -> {reply, ok, St};
+        {error, user_not_joined, Msg} -> {reply,{error, user_not_joined, Msg}, St};
+        _ -> {reply, ok, St}
+    end;
+    
 
 % Sending message (from GUI, to channel)
 handle(St, {message_send, Channel, Msg}) ->
     % TODO: Implement this function
     % {reply, ok, St} ;
-    {reply, {error, not_implemented, "message sending not implemented"}, St} ;
+    case request(list_to_atom(Channel), {message_send, Channel, Msg, St#client_st.nick, self()}) of
+        ok -> {reply, ok, St};
+        Error -> {reply, Error, St}
+    end;
 
 % This case is only relevant for the distinction assignment!
 % Change nick (no check, local only)
