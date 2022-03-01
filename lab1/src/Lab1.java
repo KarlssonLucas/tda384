@@ -1,10 +1,6 @@
 import TSim.*;
 import java.util.concurrent.*;
 
-class Shared {
-  static int count = 0;
-}
-
 public class Lab1 {
 
   private Train t1;
@@ -37,26 +33,6 @@ public class Lab1 {
       return Direction.DOWN;
     }
 
-  }
-
-  private class Test extends Thread {
-    private Semaphore sem;
-
-    public Test(Semaphore sem) {
-      this.sem = sem;
-    }
-
-    public void run() {
-      try {
-        while(true) {
-        sleep(1000);
-        System.out.println(sem.availablePermits());
-        }
-      } catch (Exception e) {
-        //TODO: handle exception
-      }
-     
-    }
   }
 
   private class Train extends Thread {
@@ -214,27 +190,23 @@ public class Lab1 {
 
           // MIDDLE TOP
 
-          if (isActive(9, 9, e) && dir == Direction.UP) {
-            tsi.setSpeed(trainId, 0);
-            semright.acquire();
-            tsi.setSpeed(trainId, speed);
-          } else if (isActive(9, 9, e) && dir == Direction.DOWN) {
+          if (isActive(7, 9, e) && dir == Direction.DOWN) {
             tsi.setSpeed(trainId, 0);
             semleft.acquire();
             tsi.setSpeed(trainId, speed);
-          }
-
-          if (isActive(6, 9, e) && dir == Direction.DOWN) {
             tsi.setSwitch(4, 9, TSimInterface.SWITCH_LEFT);
             semmiddletop.release();
-          } else if (isActive(6, 9, e) && dir == Direction.UP) {
+          } else if (isActive(7, 9, e) && dir == Direction.UP) {
             semleft.release();
           }
 
-          if (isActive(13, 9, e) && dir == Direction.UP) {
+          if (isActive(12, 9, e) && dir == Direction.UP) {
+            tsi.setSpeed(trainId, 0);
+            semright.acquire();
+            tsi.setSpeed(trainId, speed);
             tsi.setSwitch(15, 9, TSimInterface.SWITCH_RIGHT);
             semmiddletop.release();
-          } else if (isActive(13, 9, e) &&  dir == Direction.DOWN) {
+          } else if (isActive(12, 9, e) &&  dir == Direction.DOWN) {
             semright.release();
           }
 
@@ -267,7 +239,7 @@ public class Lab1 {
 
           if (isActive(15, 13, e) || isActive(15, 11, e) || isActive(15, 3, e) || isActive(15, 5, e)) {
             tsi.setSpeed(trainId, 0);
-            sleep(2000); //Works in our case
+            sleep(1000 + (20 * Math.abs(speed)));
             speed = -speed;
             tsi.setSpeed(trainId, speed);
             dir = Direction.flip(dir);

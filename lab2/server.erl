@@ -22,36 +22,35 @@ channel_init() ->
 % Start a new server process with the given name
 % Do not change the signature of this function.
 start(ServerAtom) ->
-    % TODO Implement function
-    % - Spawn a new process which waits for a message, handles it, then loops infinitely
-    % - Register this process to ServerAtom
-    % - Return the process ID
     genserver:start(ServerAtom, initial_state(), fun handler/2).
+
+handler(State, {stop}) ->
+    [genserver:stop(list_to_atom(C)) || C <- State#server_st.channels],
+    {reply, ok, State};
 
 handler(State, {join, Channel, Nick, Pid}) ->
 
     case lists:member(Channel, State#server_st.channels) of
         false -> 
-            ChannelPID = channelStart(Channel),
-            genserver:request(ChannelPID, {join, Channel, Nick, Pid}),
-            NewCh = lists:append(Channel, State#server_st.channels),
-            {reply, ok, State#server_st{channels = NewCh}};
+            channelStart(Channel),
+            Response = genserver:request(list_to_atom(Channel), {join, Pid}),
+            NewCh = lists:append([Channel], State#server_st.channels),
+            {reply, Response, State#server_st{channels = NewCh}};
         true -> 
-           genserver:request(list_to_atom(Channel), {join, Channel, Nick, Pid}),
-           {reply, ok, State}
+           Response = genserver:request(list_to_atom(Channel), {join, Pid}),
+           {reply, Response, State}
     end.
 
 % Stop the server process registered to the given name,
 % together with any other associated processes
 stop(ServerAtom) ->
-    % TODO Implement function
-    % Return ok
+    genserver:request(ServerAtom, {stop}),
     genserver:stop(ServerAtom).
 
 channelStart(ChannelName) ->
     genserver:start(list_to_atom(ChannelName), channel_init(), fun handlerChannel/2).
 
-handlerChannel(State, {join, Channel, Nick, Pid}) ->
+handlerChannel(State, {join, Pid}) ->
     InChannel = lists:member(Pid, State#channelstate.users),
 
     case InChannel of
@@ -73,6 +72,10 @@ handlerChannel(State, {leave, Channel, Nick, Pid}) ->
 
 handlerChannel(State, {message_send, Channel, Msg, Nick, Pid}) ->
     Data = {request, self(), make_ref(), {message_receive, Channel, Nick, Msg}},
-    [Member ! Data || Member <- State#channelstate.users, Member /= Pid],
-    io:fwrite(lists:length(State#channelstate.users)),
-    {reply, ok, State}.
+    InChannel = lists:member(Pid, State#channelstate.users),
+    case InChannel of
+        true ->
+            [Member ! Data || Member <- State#channelstate.users, Member /= Pid],
+            {reply, ok, State};
+        false -> {reply, {error, user_not_joined, "User not in channel"}, State}
+    end.

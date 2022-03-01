@@ -40,8 +40,6 @@ request(Atom, Request) ->
 
 % Join channel
 handle(St, {join, Channel}) ->
-    % TODO: Implement this function
-    % {reply, ok, St} ;
     case request(St#client_st.server, {join, Channel, St#client_st.nick, self()}) of
         ok -> {reply, ok, St};
         Error -> {reply, Error, St}
@@ -50,8 +48,6 @@ handle(St, {join, Channel}) ->
 
 % Leave channel
 handle(St, {leave, Channel}) ->
-    % TODO: Implement this function
-    % {reply, ok, St} ;
     case request(list_to_atom(Channel), {leave, Channel, St#client_st.nick, self()}) of
         ok -> {reply, ok, St};
         {error, user_not_joined, Msg} -> {reply,{error, user_not_joined, Msg}, St};
@@ -61,12 +57,8 @@ handle(St, {leave, Channel}) ->
 
 % Sending message (from GUI, to channel)
 handle(St, {message_send, Channel, Msg}) ->
-    % TODO: Implement this function
-    % {reply, ok, St} ;
-    case request(list_to_atom(Channel), {message_send, Channel, Msg, St#client_st.nick, self()}) of
-        ok -> {reply, ok, St};
-        Error -> {reply, Error, St}
-    end;
+    Reply = request(list_to_atom(Channel), {message_send, Channel, Msg, St#client_st.nick, self()}),
+    {reply, Reply, St};
 
 % This case is only relevant for the distinction assignment!
 % Change nick (no check, local only)
